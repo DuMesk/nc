@@ -1,64 +1,40 @@
-// Elementos do DOM
-const loginForm = document.getElementById('loginForm');
-const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-const submitButton = loginForm.querySelector('button[type="submit"]');
-const toast = document.getElementById('toast');
-
-// Função para mostrar mensagens toast
-function showToast(message, isError = false) {
-  toast.textContent = message;
-  toast.style.backgroundColor = isError ? '#dc2626' : '#16a34a';
-  toast.classList.add('show');
-  
-  setTimeout(() => {
-    toast.classList.remove('show');
-  }, 3000);
-}
-
-// Função para fazer login
-async function handleLogin(e) {
-  e.preventDefault();
-  
-  const email = emailInput.value;
-  const password = passwordInput.value;
-  
-  // Desabilita o botão durante o login
-  submitButton.disabled = true;
-  submitButton.textContent = 'Entrando...';
-  
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (error) throw error;
-
-    if (data.user) {
-      showToast('Login realizado com sucesso!');
-      // Redireciona para pagina_inicial.html após 1 segundo
-      setTimeout(() => {
-        window.location.href = 'pagina_inicial.html';
-      }, 1000);
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    
+    // Get form values
+    const email = document.getElementById('email').value
+    const password = document.getElementById('password').value
+    
+    try {
+        // Show loading state
+        const submitBtn = document.querySelector('.submit-btn')
+        const originalBtnText = submitBtn.innerHTML
+        submitBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Entrando...'
+        submitBtn.disabled = true
+        // Attempt to sign in
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        })
+        if (error) throw error
+        // Success - redirect to dashboard or home page
+        window.location.href = 'pagina_inicial.html'
+    } catch (error) {
+        // Handle errors
+        alert('Erro ao fazer login: ' + error.message)
+        
+        // Reset button state
+        const submitBtn = document.querySelector('.submit-btn')
+        submitBtn.innerHTML = originalBtnText
+        submitBtn.disabled = false
     }
-  } catch (error) {
-    showToast(error.message || 'Erro ao fazer login', true);
-    submitButton.disabled = false;
-    submitButton.textContent = 'Entrar';
-  }
-}
-
-// Event listeners
-loginForm.addEventListener('submit', handleLogin);
-
-// Verifica se já existe uma sessão ativa
-async function checkSession() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
-    window.location.href = 'udson.html';
-  }
-}
-
-// Verifica a sessão ao carregar a página
-checkSession();
+})
+// Check if user is already logged in
+window.addEventListener('DOMContentLoaded', async () => {
+    const { data: { session }, error } = await supabase.auth.getSession()
+    
+    if (session) {
+        // User is already logged in, redirect to dashboard
+        window.location.href = 'pagina_inicial.html'
+    }
+})
